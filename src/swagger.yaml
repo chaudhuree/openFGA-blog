@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: OpenFGA Blog API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200': { description: OK }
+  /auth/login:
+    post:
+      summary: Login with email and receive JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+              required: [email]
+      responses:
+        '200': { description: Token and user returned }
+  /users:
+    get:
+      summary: List users
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: List of users }
+  /users/{userId}/roles:
+    post:
+      summary: Grant or revoke a role (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string, enum: [admin, editor, moderator, viewer] }
+                action: { type: string, enum: [grant, revoke] }
+              required: [role, action]
+      responses:
+        '200': { description: OK }
+  /posts:
+    get:
+      summary: List posts (published or own)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create post (draft)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                content: { type: string }
+              required: [title, content]
+      responses:
+        '201': { description: Created }
+  /posts/{id}:
+    get:
+      summary: Get a post
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    patch:
+      summary: Edit a post
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                content: { type: string }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Delete a post
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+  /posts/{id}/publish:
+    post:
+      summary: Publish a post (moderator or admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /posts/{id}/transfer-owner:
+    post:
+      summary: Transfer ownership to another editor (owner only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newOwnerUserId: { type: string }
+              required: [newOwnerUserId]
+      responses:
+        '200': { description: OK }
+  /posts/{id}/grant-edit:
+    post:
+      summary: Admin grants per-post edit to a moderator
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moderatorUserId: { type: string }
+              required: [moderatorUserId]
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

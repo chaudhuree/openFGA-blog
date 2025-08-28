@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bloguser
+      POSTGRES_PASSWORD: blogpass
+      POSTGRES_DB: blogdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5432:5432"
+
+  openfga:
+    image: openfga/openfga:v1.5.5
+    command: run
+    environment:
+      OPENFGA_LOG_FORMAT: json
+      OPENFGA_PLAYGROUND_ENABLED: "true"
+    ports:
+      - "8080:8080"   # API
+      - "3001:3000"   # Playground
+
+  adminer:
+    image: adminer:4
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    ports:
+      - "8082:8080"   # Adminer UI
+
+volumes:
+  pgdata:

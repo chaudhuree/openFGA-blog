@@ -1,0 +1,24 @@
+{
+  "name": "openfga-blog",
+  "version": "1.0.0",
+  "description": "Blog API with Express, Postgres, and OpenFGA authorization",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "db:init": "node scripts/db-init.js",
+    "fga:model": "node scripts/fga-load-model.js"
+  },
+  "dependencies": {
+    "@openfga/sdk": "^0.9.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
