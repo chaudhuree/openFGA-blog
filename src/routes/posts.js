@@ -6,7 +6,7 @@ const { fga, userObj, postObj } = require('../lib/fga');
 async function can(userId, relation, postId) {
   const resp = await fga.check({ user: userObj(userId), relation, object: postObj(postId) });
   // console.log(`can(${userId}, ${relation}, ${postId}) -> ${resp.allowed}`);
-  return resp.allowed === true || resp.allowed === 'ALLOW';
+  return resp.allowed === true;
 }
 
 async function hasOrgRole(userId, relation) {
