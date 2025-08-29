@@ -6,11 +6,13 @@ const { fga, userObj } = require('../lib/fga');
 // Helper: check if caller is admin
 async function isAdmin(userId) {
   const resp = await fga.check({ user: userObj(userId), relation: 'admin', object: 'org:blog' });
-  return resp.allowed === 'ALLOW';
+  return resp.allowed === 'ALLOW' || resp.allowed === true;
 }
 
 // List users (any logged-in user can list)
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
+  const hasAdmin = await isAdmin(req.user.id);
+  if (!hasAdmin) return res.status(403).json({ error: 'forbidden' });
   const rs = await pool.query('SELECT id, email, created_at FROM users ORDER BY created_at DESC');
   res.json(rs.rows);
 });
@@ -31,9 +33,9 @@ router.post('/:userId/roles', async (req, res) => {
   const tuple = { user: `user:${userId}`, relation: role, object: 'org:blog' };
 
   if (action === 'grant') {
-    await fga.write({ writes: { tuple_keys: [tuple] } });
+    await fga.write({ writes: [tuple] });
   } else {
-    await fga.write({ deletes: { tuple_keys: [tuple] } });
+    await fga.write({ deletes: [tuple] });
   }
 
   res.json({ ok: true });
