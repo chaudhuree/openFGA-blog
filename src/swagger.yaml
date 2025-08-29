@@ -123,6 +123,17 @@ paths:
           schema: { type: string }
       responses:
         '200': { description: OK }
+  /posts/{id}/draft:
+    post:
+      summary: Draft a post (owner)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
   /posts/{id}/transfer-owner:
     post:
       summary: Transfer ownership to another editor (owner only)

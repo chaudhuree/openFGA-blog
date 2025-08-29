@@ -122,6 +122,20 @@ router.post('/:id/publish', async (req, res) => {
   }
 });
 
+// Draft post (owner)
+router.post('/:id/draft', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isOwner = await can(req.user.id, 'owner', id).catch(() => false);
+    if (!isOwner) return res.status(403).json({ error: 'forbidden' });
+    const rs = await pool.query("UPDATE posts SET status = 'draft', updated_at = NOW() WHERE id = $1 RETURNING *", [id]);
+    res.json(rs.rows[0]);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'draft_failed' });
+  }
+});
+
 // Transfer ownership (editor can transfer own post to another editor)
 router.post('/:id/transfer-owner', async (req, res) => {
   try {
