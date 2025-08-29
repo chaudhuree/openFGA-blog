@@ -19,7 +19,7 @@ services:
       OPENFGA_PLAYGROUND_ENABLED: "true"
     ports:
       - "8080:8080"   # API
-      - "3001:3000"   # Playground
+      - "5000:3000"   # Playground
 
   adminer:
     image: adminer:4

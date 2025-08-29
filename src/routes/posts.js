@@ -5,7 +5,7 @@ const { fga, userObj, postObj } = require('../lib/fga');
 
 async function can(userId, relation, postId) {
   const resp = await fga.check({ user: userObj(userId), relation, object: postObj(postId) });
-  console.log(`can(${userId}, ${relation}, ${postId}) -> ${resp.allowed}`);
+  // console.log(`can(${userId}, ${relation}, ${postId}) -> ${resp.allowed}`);
   return resp.allowed === true || resp.allowed === 'ALLOW';
 }
 
@@ -17,8 +17,7 @@ async function hasOrgRole(userId, relation) {
 
 // Create post (editor/moderator/admin). Default draft. Owner is creator.
 router.post('/', async (req, res) => {
-  console.log(req.user);
-  console.log(req.body);
+
   try {
     const { title, content } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'title and content required' });
@@ -31,7 +30,7 @@ router.post('/', async (req, res) => {
       hasOrgRole(userId, 'moderator'),
     ]);
     const canCreate = isAdmin || isEditor || isModerator;
-    console.log(`roleChecks(${userId}) -> admin=${isAdmin}, editor=${isEditor}, moderator=${isModerator}, canCreate=${canCreate}`);
+    // console.log(`roleChecks(${userId}) -> admin=${isAdmin}, editor=${isEditor}, moderator=${isModerator}, canCreate=${canCreate}`);
     if (!canCreate) return res.status(403).json({ error: 'forbidden' });
 
     const ownerId = req.user.id;
