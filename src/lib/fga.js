@@ -21,7 +21,9 @@ async function ensureFGAStoreAndModel() {
   let storeId = process.env.FGA_STORE_ID;
   if (!storeId) {
     const stores = await fga.listStores({ pageSize: 1 });
+    // console.log(stores);
     if (stores.stores && stores.stores.length > 0) {
+      // console.log(stores.stores[0].id);
       storeId = stores.stores[0].id;
     } else {
       const created = await fga.createStore({ name: 'blog-store' });
@@ -29,6 +31,48 @@ async function ensureFGAStoreAndModel() {
     }
     fga.storeId = storeId;
     process.env.FGA_STORE_ID = storeId;
+    // Ensure FGA_STORE_ID is persisted in the root .env
+    // - If FGA_STORE_ID key exists with a non-empty value: leave as-is
+    // - If key exists but empty: set to storeId
+    // - If key does not exist: append it at the end
+    const envPath = path.join(__dirname, '..', '..', '.env');
+    const lineForStore = `FGA_STORE_ID=${storeId}`;
+    try {
+      if (fs.existsSync(envPath)) {
+        const raw = fs.readFileSync(envPath, 'utf8');
+        const lines = raw.split(/\r?\n/);
+        let found = false;
+        const updated = lines.map((line) => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith('FGA_STORE_ID=')) {
+            found = true;
+            const current = trimmed.substring('FGA_STORE_ID='.length);
+            // Only replace if empty
+            if (current === '') {
+              return lineForStore;
+            }
+            return line; // leave existing non-empty value
+          }
+          return line;
+        });
+        if (!found) {
+          // Append with a newline if file is non-empty and does not end with a newline
+          if (updated.length === 0 || updated[updated.length - 1] !== '') {
+            updated.push(lineForStore);
+          } else {
+            // file already ends with a newline represented by a trailing empty element
+            updated[updated.length - 1] = lineForStore;
+            updated.push('');
+          }
+        }
+        fs.writeFileSync(envPath, updated.join('\n'));
+      } else {
+        // Create a new .env with the store id
+        fs.writeFileSync(envPath, `${lineForStore}\n`);
+      }
+    } catch (e) {
+      console.warn('Failed to persist FGA_STORE_ID to .env:', e?.message || e);
+    }
     console.log('Using FGA store:', storeId);
   }
 
