@@ -148,9 +148,10 @@ router.post('/:id/transfer-owner', async (req, res) => {
     const isAdmin = await hasOrgRole(req.user.id, 'admin');
     if (!(isOwner || isAdmin)) return res.status(403).json({ error: 'forbidden' });
 
-    // New owner must be an editor
+    // New owner must be an editor or moderator
     const newIsEditor = await hasOrgRole(newOwnerUserId, 'editor');
-    if (!newIsEditor) return res.status(400).json({ error: 'new_owner_must_be_editor' });
+    const newIsModerator = await hasOrgRole(newOwnerUserId, 'moderator');
+    if (!(newIsEditor || newIsModerator)) return res.status(400).json({ error: 'new_owner_must_be_editor_or_moderator' });
 
     // Update DB
     const rs = await pool.query('UPDATE posts SET owner_id = $2, updated_at = NOW() WHERE id = $1 RETURNING *', [id, newOwnerUserId]);
@@ -158,8 +159,8 @@ router.post('/:id/transfer-owner', async (req, res) => {
 
     // Update FGA owner tuple
     await fga.write({
-      deletes: { tuple_keys: [ { user: userObj(req.user.id), relation: 'owner', object: postObj(id) } ] },
-      writes:  { tuple_keys: [ { user: userObj(newOwnerUserId), relation: 'owner', object: postObj(id) } ] }
+      deletes: [ { user: userObj(req.user.id), relation: 'owner', object: postObj(id) } ],
+      writes:  [ { user: userObj(newOwnerUserId), relation: 'owner', object: postObj(id) } ]
     });
 
     res.json(rs.rows[0]);
@@ -185,7 +186,7 @@ router.post('/:id/grant-edit', async (req, res) => {
     if (!isModerator) return res.status(400).json({ error: 'target_not_moderator' });
 
     // Grant via granted_editor relation
-    await fga.write({ writes: { tuple_keys: [ { user: userObj(moderatorUserId), relation: 'granted_editor', object: postObj(id) } ] } });
+    await fga.write({ writes: [ { user: userObj(moderatorUserId), relation: 'granted_editor', object: postObj(id) } ] });
 
     res.json({ ok: true });
   } catch (e) {
