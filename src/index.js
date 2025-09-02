@@ -38,12 +38,23 @@ const swaggerDoc = yaml.parse(fs.readFileSync(swaggerPath, 'utf8'));
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // Start server only after ensuring DB and FGA are ready
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
+
+// Ensure DB schema (idempotent using IF NOT EXISTS in init.sql)
+async function ensureDatabaseSchema() {
+  const sqlPath = path.join(__dirname, '..', 'sql', 'init.sql');
+  const initSql = fs.readFileSync(sqlPath, 'utf8');
+  await pool.query(initSql);
+  console.log('Database schema ensured.');
+}
 
 (async () => {
   try {
     // Test DB connection
     await pool.query('SELECT 1');
+
+    // Ensure DB schema exists
+    await ensureDatabaseSchema();
 
     // Ensure OpenFGA store and model are set
     await ensureFGAStoreAndModel();
